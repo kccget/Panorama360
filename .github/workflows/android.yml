@@ -1,4 +1,4 @@
-name: Panorama360 一键打包（最终兼容版）
+name: Panorama360 终极无缓存打包
 on:
   workflow_dispatch:
 
@@ -15,22 +15,26 @@ jobs:
           java-version: '8'
           distribution: 'temurin'
 
-      - name: 安装适配老项目的Gradle 4.10.3
-        uses: gradle/actions/setup-gradle@v3
-        with:
-          gradle-version: '4.10.3'
+      - name: 强制安装Gradle 4.10.3（无缓存）
+        run: |
+          wget https://services.gradle.org/distributions/gradle-4.10.3-bin.zip -P /tmp
+          unzip -d /opt/gradle /tmp/gradle-4.10.3-bin.zip
+          ln -s /opt/gradle/gradle-4.10.3 /opt/gradle/latest
+          echo "GRADLE_HOME=/opt/gradle/latest" >> $GITHUB_ENV
+          echo "PATH=\$GRADLE_HOME/bin:\$PATH" >> $GITHUB_ENV
+          gradle --version
 
-      - name: 生成并授权gradlew（纯项目内操作）
+      - name: 进入android目录，强制生成并授权gradlew
         run: |
           cd android
-          # 用已安装的Gradle 4.10.3生成wrapper，避免系统版本问题
           gradle wrapper --gradle-version 4.10.3
           chmod +x gradlew
+          ls -la
 
-      - name: 执行打包
+      - name: 执行打包（无守护进程、无缓存）
         run: |
           cd android
-          ./gradlew assembleDebug --no-daemon --stacktrace
+          ./gradlew assembleDebug --no-daemon --no-build-cache --stacktrace
 
       - name: 上传APK
         uses: actions/upload-artifact@v4
