@@ -1,6 +1,6 @@
-name: Panorama360 Build APK
+name: Panorama360 一键打包
 on:
-  workflow_dispatch: # 只允许你手动点击打包，避免自动触发报错
+  workflow_dispatch:
 
 jobs:
   build:
@@ -15,20 +15,28 @@ jobs:
           java-version: '8'
           distribution: 'temurin'
 
-      - name: 安装Gradle并生成Wrapper
+      - name: 安装系统级Gradle
         run: |
-          sudo apt update && sudo apt install gradle -y
-          cd android
-          gradle wrapper --gradle-version 4.10.3
+          sudo apt update -y
+          sudo apt install gradle -y
 
-      - name: 给文件授权并打包
+      - name: 自动生成并授权gradlew
+        run: |
+          # 找到android目录并进入
+          cd android
+          # 强制生成gradle wrapper
+          gradle wrapper --gradle-version 4.10.3
+          # 给所有相关文件加执行权限
+          chmod +x gradlew gradle/wrapper/gradle-wrapper.jar
+          ls -la # 打印文件列表，方便排错
+
+      - name: 执行打包
         run: |
           cd android
-          chmod +x gradlew
-          ./gradlew assembleDebug
+          ./gradlew assembleDebug --stacktrace
 
       - name: 上传APK
         uses: actions/upload-artifact@v4
         with:
-          name: panorama360-apk
+          name: Panorama360-APK
           path: android/app/build/outputs/apk/debug/*.apk
