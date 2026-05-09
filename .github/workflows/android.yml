@@ -1,4 +1,4 @@
-name: Panorama360 一键打包
+name: Panorama360 一键打包（最终兼容版）
 on:
   workflow_dispatch:
 
@@ -15,25 +15,22 @@ jobs:
           java-version: '8'
           distribution: 'temurin'
 
-      - name: 安装系统级Gradle
-        run: |
-          sudo apt update -y
-          sudo apt install gradle -y
+      - name: 安装适配老项目的Gradle 4.10.3
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: '4.10.3'
 
-      - name: 自动生成并授权gradlew
+      - name: 生成并授权gradlew（纯项目内操作）
         run: |
-          # 找到android目录并进入
           cd android
-          # 强制生成gradle wrapper
+          # 用已安装的Gradle 4.10.3生成wrapper，避免系统版本问题
           gradle wrapper --gradle-version 4.10.3
-          # 给所有相关文件加执行权限
-          chmod +x gradlew gradle/wrapper/gradle-wrapper.jar
-          ls -la # 打印文件列表，方便排错
+          chmod +x gradlew
 
       - name: 执行打包
         run: |
           cd android
-          ./gradlew assembleDebug --stacktrace
+          ./gradlew assembleDebug --no-daemon --stacktrace
 
       - name: 上传APK
         uses: actions/upload-artifact@v4
